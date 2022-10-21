@@ -1,29 +1,10 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import personService from './services/personService'
+import Notification from './components/Notification'
+import SearchFilter from './components/SearchFilter'
+import AddPeopleForm from './components/AddPeopleForm'
+import RenderPhonebook from './components/RenderPhonebook'
 
-const SearchFilter = ( {value, onChange} ) => {
-  return (
-    <div>filter shown with <input value={value} onChange={onChange}/></div>
-  )
-}
-
-const AddPeopleForm = ( {onSubmit, nameValue, handleChangeName, numberValue, handleChangeNumber } ) => {
-  return (
-    <form onSubmit={onSubmit}>
-        <div>name: <input value={nameValue} onChange={handleChangeName}/></div>
-        <div>number: <input value={numberValue} onChange={handleChangeNumber}/></div>
-        <div><button type="submit">add</button></div>
-    </form>
-  )
-}
-
-const RenderPhonebook = ( {phonebook} ) => {
-  return (
-    <div>
-        {phonebook.map(person => <p key={person.name}>{person.name} {person.number}</p> )}
-    </div>
-  )
-}
 
 const App = () => {
   const [persons, setPersons] = useState([
@@ -32,16 +13,17 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [newFilter, setNewFilter] = useState('')
+  const [personToDelete, setPersonToDelete] = useState('')
+  const [errorMessage, setErrorMessage] = useState('some error happened...')
 
 
-  // axios
   useEffect(() => {
     console.log('effect')
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
+    personService
+      .getAll()
+      .then(initialPersons => {
         console.log('promise fulfilled')
-        setPersons(response.data)
+        setPersons(initialPersons)
       })
   }, [])
   console.log('render', persons.length, 'persons')
@@ -65,6 +47,13 @@ const App = () => {
       setPersons(persons.concat(personObject))
       setNewName('')
       setNewNumber('')
+
+      personService
+      .create(personObject)
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson))
+        setNewName('')
+      })
     }
   }
 
@@ -85,6 +74,16 @@ const App = () => {
     ? persons
     : persons.filter(person => person.name.toLowerCase().includes(newFilter.toLowerCase()))
 
+  const deletePerson = (name) => {
+    // prevent user from deleting someone she doesn't want to delete
+    if (window.confirm(`Delete ${name} ?"`)) {
+      personService.delete(name)
+        .then(() => console.log('success delete')) // el then tiene q ser un map sin la persona i setpersons actualizado
+        .catch(error => alert(`the person ${name} is not present in the phonebook`))
+    }
+    setPersonToDelete('')
+  }
+
     
   return (
     <div>
@@ -93,7 +92,7 @@ const App = () => {
       <h2>Add a new</h2>
       <AddPeopleForm onSubmit={addPerson} nameValue={newName} handleChangeName={handleNameChange} numberValue={newNumber} handleChangeNumber={handleNumberChange}/>
       <h2>Numbers</h2>
-      <RenderPhonebook phonebook={personsToShow}/>
+      <RenderPhonebook phonebook={personsToShow} onClick={() => deletePerson(personToDelete)}/>
     </div>
   )
 }
