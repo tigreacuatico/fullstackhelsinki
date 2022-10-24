@@ -147,5 +147,14 @@ export default App
 // npm install json-server --save-dev
 // npm install axios
 
+//npm install --save-dev nodemon
+// node in console
+// ctrl c to stop app
+// npm install express
+
+
+// "dev": "nodemon index.js", in package.json under scripts  -----> npm run dev
+// that way we dont have to type: node_modules/.bin/nodemon index.js   to start application with nodemon
+
 
     
